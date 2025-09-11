@@ -1,59 +1,78 @@
 package com.cassa.cassasmartbackend.controllers;
 
-
-import com.cassa.cassasmartbackend.model.daos.OrdineDao;
+import com.cassa.cassasmartbackend.model.dtos.OrdineDto;
+import com.cassa.cassasmartbackend.model.dtos.OrdineItemDto;
+import com.cassa.cassasmartbackend.model.dtos.mappers.OrdineMapper;
 import com.cassa.cassasmartbackend.model.entities.Ordine;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.cassa.cassasmartbackend.model.dtos.service.OrdineService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/ordini")
+@RequiredArgsConstructor
 public class OrdineController
 {
 
-	@Autowired
-	private OrdineDao ordineDao;
+	private final OrdineService ordineService;
 
 	@GetMapping
-	public List<Ordine> getAllOrdini()
+	public List<OrdineDto> getAllOrdini()
 	{
-		return ordineDao.findAll();
+		return ordineService.listaOrdini().stream()
+				.map(OrdineMapper::toDTO)
+				.toList();
 	}
 
 	@GetMapping("/{id}")
-	public Ordine getOrdineById(@PathVariable Long id)
+	public OrdineDto getOrdineById(@PathVariable Long id)
 	{
-		return ordineDao.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException("Ordine non trovato con id " + id));
+		Ordine ordine = ordineService.listaOrdini().stream()
+				.filter(o -> o.getId().equals(id))
+				.findFirst()
+				.orElseThrow(() -> new RuntimeException("Ordine non trovato con id " + id));
+		return OrdineMapper.toDTO(ordine);
 	}
 
 	@PostMapping
-	public Ordine creaOrdine(@RequestBody Ordine ordine)
+	public OrdineDto creaOrdine(@RequestBody List<OrdineItemDto> itemDtos)
 	{
-		return ordineDao.save(ordine);
+		Ordine ordine = ordineService.creaOrdine(itemDtos);
+		return OrdineMapper.toDTO(ordine);
 	}
 
 	@PutMapping("/{id}")
-	public Ordine aggiornaOrdine(@PathVariable Long id, @RequestBody Ordine ordine)
+	public OrdineDto aggiornaOrdine(@PathVariable Long id, @RequestBody List<OrdineItemDto> itemDtos)
 	{
-		Ordine esistente = ordineDao.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException("Ordine non trovato con id " + id));
-		esistente.setDataCreazione(ordine.getDataCreazione());
-		esistente.setTotale(ordine.getTotale());
-		esistente.setItem(ordine.getItem());
-		return ordineDao.save(esistente);
+		Ordine ordine = ordineService.aggiornaOrdine(id, itemDtos);
+		return OrdineMapper.toDTO(ordine);
 	}
 
 	@DeleteMapping("/{id}")
 	public void eliminaOrdine(@PathVariable Long id)
 	{
-		if (!ordineDao.existsById(id))
-		{
-			throw new EntityNotFoundException("Ordine non trovato con id " + id);
-		}
-		ordineDao.deleteById(id);
+		ordineService.eliminaOrdine(id);
+	}
+
+	@GetMapping("/statistiche/giornaliere")
+	public Map<String, Object> statisticheGiornaliere(@RequestParam String giorno)
+	{
+		return ordineService.statisticheGiornaliere(LocalDate.parse(giorno));
+	}
+
+	@GetMapping("/statistiche/mensili")
+	public Map<String, Object> statisticheMensili(@RequestParam int anno, @RequestParam int mese)
+	{
+		return ordineService.statisticheMensili(anno, mese);
+	}
+
+	@GetMapping("/statistiche/annuali")
+	public Map<String, Object> statisticheAnnuali(@RequestParam int anno)
+	{
+		return ordineService.statisticheAnnuali(anno);
 	}
 }

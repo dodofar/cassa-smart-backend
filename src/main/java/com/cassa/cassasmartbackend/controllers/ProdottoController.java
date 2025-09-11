@@ -1,58 +1,54 @@
 package com.cassa.cassasmartbackend.controllers;
 
-import com.cassa.cassasmartbackend.model.daos.ProdottoDao;
+import com.cassa.cassasmartbackend.model.dtos.ProdottoDto;
+import com.cassa.cassasmartbackend.model.dtos.mappers.ProdottoMapper;
 import com.cassa.cassasmartbackend.model.entities.Prodotto;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.cassa.cassasmartbackend.model.dtos.service.ProdottoService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/prodotti")
+@RequiredArgsConstructor
 public class ProdottoController
 {
 
-	@Autowired
-	private ProdottoDao prodottoDao;
+	private final ProdottoService prodottoService;
 
 	@GetMapping
-	public List<Prodotto> getAllProdotti()
+	public List<ProdottoDto> getAllProdotti()
 	{
-		return prodottoDao.findAll();
+		return prodottoService.listaProdotti().stream()
+				.map(ProdottoMapper::toDTO)
+				.toList();
 	}
 
 	@GetMapping("/{id}")
-	public Prodotto getProdottoById(@PathVariable Long id)
+	public ProdottoDto getProdottoById(@PathVariable Long id)
 	{
-		return prodottoDao.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException("Prodotto non trovato con id " + id));
+		Prodotto prodotto = prodottoService.getProdottoById(id);
+		return ProdottoMapper.toDTO(prodotto);
 	}
 
 	@PostMapping
-	public Prodotto creaProdotto(@RequestBody Prodotto prodotto)
+	public ProdottoDto creaProdotto(@RequestBody ProdottoDto dto)
 	{
-		return prodottoDao.save(prodotto);
+		Prodotto prodotto = ProdottoMapper.toEntity(dto);
+		return ProdottoMapper.toDTO(prodottoService.creaProdotto(prodotto));
 	}
 
 	@PutMapping("/{id}")
-	public Prodotto aggiornaProdotto(@PathVariable Long id, @RequestBody Prodotto prodotto)
+	public ProdottoDto aggiornaProdotto(@PathVariable Long id, @RequestBody ProdottoDto dto)
 	{
-		Prodotto esistente = prodottoDao.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException("Prodotto non trovato con id " + id));
-		esistente.setNome(prodotto.getNome());
-		esistente.setPrezzo(prodotto.getPrezzo());
-		esistente.setQuantita(prodotto.getQuantita());
-		return prodottoDao.save(esistente);
+		Prodotto prodotto = ProdottoMapper.toEntity(dto);
+		return ProdottoMapper.toDTO(prodottoService.aggiornaProdotto(id, prodotto));
 	}
 
 	@DeleteMapping("/{id}")
 	public void eliminaProdotto(@PathVariable Long id)
 	{
-		if (!prodottoDao.existsById(id))
-		{
-			throw new EntityNotFoundException("Prodotto non trovato con id " + id);
-		}
-		prodottoDao.deleteById(id);
+		prodottoService.eliminaProdotto(id);
 	}
 }
