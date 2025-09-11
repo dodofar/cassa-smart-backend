@@ -11,29 +11,34 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/ordini")
-public class OrdineController {
+public class OrdineController
+{
 
 	@Autowired
 	private OrdineDao ordineDao;
 
 	@GetMapping
-	public List<Ordine> getAllOrdini() {
+	public List<Ordine> getAllOrdini()
+	{
 		return ordineDao.findAll();
 	}
 
 	@GetMapping("/{id}")
-	public Ordine getOrdineById(@PathVariable Long id) {
+	public Ordine getOrdineById(@PathVariable Long id)
+	{
 		return ordineDao.findById(id)
 				.orElseThrow(() -> new EntityNotFoundException("Ordine non trovato con id " + id));
 	}
 
 	@PostMapping
-	public Ordine creaOrdine(@RequestBody Ordine ordine) {
+	public Ordine creaOrdine(@RequestBody Ordine ordine)
+	{
 		return ordineDao.save(ordine);
 	}
 
 	@PutMapping("/{id}")
-	public Ordine aggiornaOrdine(@PathVariable Long id, @RequestBody Ordine ordine) {
+	public Ordine aggiornaOrdine(@PathVariable Long id, @RequestBody Ordine ordine)
+	{
 		Ordine esistente = ordineDao.findById(id)
 				.orElseThrow(() -> new EntityNotFoundException("Ordine non trovato con id " + id));
 		esistente.setDataCreazione(ordine.getDataCreazione());
@@ -43,8 +48,10 @@ public class OrdineController {
 	}
 
 	@DeleteMapping("/{id}")
-	public void eliminaOrdine(@PathVariable Long id) {
-		if (!ordineDao.existsById(id)) {
+	public void eliminaOrdine(@PathVariable Long id)
+	{
+		if (!ordineDao.existsById(id))
+		{
 			throw new EntityNotFoundException("Ordine non trovato con id " + id);
 		}
 		ordineDao.deleteById(id);

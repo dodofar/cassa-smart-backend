@@ -14,6 +14,7 @@ public class ProdottoMapper
 				prodotto.getPrezzo()
 		);
 	}
+
 	public static Prodotto toEntity(ProdottoDto dto)
 	{
 		Prodotto p = new Prodotto();

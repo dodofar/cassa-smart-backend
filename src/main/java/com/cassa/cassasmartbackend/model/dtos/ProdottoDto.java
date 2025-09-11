@@ -4,4 +4,6 @@ public record ProdottoDto(
 		Long id,
 		String nome,
 		Double prezzo
-) {}
+)
+{
+}
