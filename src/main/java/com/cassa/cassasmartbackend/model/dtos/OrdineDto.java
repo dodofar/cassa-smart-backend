@@ -8,4 +8,6 @@ public record OrdineDto(
 		LocalDateTime dataCreazione,
 		Double totale,
 		List<OrdineItemDto> item
-) {}
+)
+{
+}

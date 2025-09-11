@@ -10,29 +10,34 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/prodotti")
-public class ProdottoController {
+public class ProdottoController
+{
 
 	@Autowired
 	private ProdottoDao prodottoDao;
 
 	@GetMapping
-	public List<Prodotto> getAllProdotti() {
+	public List<Prodotto> getAllProdotti()
+	{
 		return prodottoDao.findAll();
 	}
 
 	@GetMapping("/{id}")
-	public Prodotto getProdottoById(@PathVariable Long id) {
+	public Prodotto getProdottoById(@PathVariable Long id)
+	{
 		return prodottoDao.findById(id)
 				.orElseThrow(() -> new EntityNotFoundException("Prodotto non trovato con id " + id));
 	}
 
 	@PostMapping
-	public Prodotto creaProdotto(@RequestBody Prodotto prodotto) {
+	public Prodotto creaProdotto(@RequestBody Prodotto prodotto)
+	{
 		return prodottoDao.save(prodotto);
 	}
 
 	@PutMapping("/{id}")
-	public Prodotto aggiornaProdotto(@PathVariable Long id, @RequestBody Prodotto prodotto) {
+	public Prodotto aggiornaProdotto(@PathVariable Long id, @RequestBody Prodotto prodotto)
+	{
 		Prodotto esistente = prodottoDao.findById(id)
 				.orElseThrow(() -> new EntityNotFoundException("Prodotto non trovato con id " + id));
 		esistente.setNome(prodotto.getNome());
@@ -42,8 +47,10 @@ public class ProdottoController {
 	}
 
 	@DeleteMapping("/{id}")
-	public void eliminaProdotto(@PathVariable Long id) {
-		if (!prodottoDao.existsById(id)) {
+	public void eliminaProdotto(@PathVariable Long id)
+	{
+		if (!prodottoDao.existsById(id))
+		{
 			throw new EntityNotFoundException("Prodotto non trovato con id " + id);
 		}
 		prodottoDao.deleteById(id);

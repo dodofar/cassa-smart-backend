@@ -6,4 +6,6 @@ public record OrdineItemDto(
 		String nomeProdotto,
 		Integer quantita,
 		Double prezzoTotale
-) {}
+)
+{
+}
