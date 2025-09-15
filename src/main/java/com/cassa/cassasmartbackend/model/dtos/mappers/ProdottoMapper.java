@@ -11,7 +11,8 @@ public class ProdottoMapper
 		return new ProdottoDto(
 				prodotto.getId(),
 				prodotto.getNome(),
-				prodotto.getPrezzo()
+				prodotto.getPrezzo(),
+				prodotto.getQuantita()
 		);
 	}
 
@@ -21,6 +22,7 @@ public class ProdottoMapper
 		p.setId(dto.id());
 		p.setNome(dto.nome());
 		p.setPrezzo(dto.prezzo());
+		p.setQuantita(dto.quantita());
 		return p;
 	}
 }

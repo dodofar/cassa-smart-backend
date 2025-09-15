@@ -9,6 +9,7 @@ import com.cassa.cassasmartbackend.model.entities.Prodotto;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,6 +32,7 @@ public class OrdineService
 	}
 
 	//Crea ordine
+	@Transactional
 	public Ordine creaOrdine(List<OrdineItemDto> itemDtos)
 	{
 		if (itemDtos == null || itemDtos.isEmpty())
@@ -51,13 +53,32 @@ public class OrdineService
 			}
 
 			Prodotto prodotto = prodottoDao.findById(dto.prodottoId())
-					.orElseThrow(() -> new EntityNotFoundException("Prodotto con id " + dto.prodottoId() + "non trovato."));
+					.orElseThrow(() -> new EntityNotFoundException("Prodotto con id " + dto.prodottoId() + " non trovato."));
+
+			// Controllo disponibilità
+			Integer disponibile = prodotto.getQuantita();
+			int richiesta = dto.quantita();
+			if (disponibile == null || disponibile < richiesta)
+			{
+				throw new IllegalArgumentException("Quantità insufficiente per il prodotto '" + prodotto.getNome() + "': disponibili " + (disponibile == null ? 0 : disponibile) + ", richiesti " + richiesta + ".");
+			}
+
+			// Scala la quantità in magazzino
+			prodotto.setQuantita(disponibile - richiesta);
+			prodottoDao.save(prodotto);
+
+			// Validazione prezzo prodotto
+			Double prezzoUnitario = prodotto.getPrezzo();
+			if (prezzoUnitario == null || prezzoUnitario <= 0)
+			{
+				throw new IllegalArgumentException("Prezzo non valido per il prodotto '" + prodotto.getNome() + "'. Impostare un prezzo > 0.");
+			}
 
 			OrdineItem item = new OrdineItem();
 			item.setOrdine(ordine);
 			item.setProdotto(prodotto);
 			item.setQuantita(dto.quantita());
-			item.setPrezzoTotale(prodotto.getPrezzo() * dto.quantita());
+			item.setPrezzoTotale(prezzoUnitario * dto.quantita());
 
 			totale += item.getPrezzoTotale();
 			items.add(item);
@@ -74,43 +95,7 @@ public class OrdineService
 	//Aggiorna ordine
 	public Ordine aggiornaOrdine(Long id, List<OrdineItemDto> itemDtos)
 	{
-		Ordine ordine = ordineDao.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException("Ordine con id" + id + " non trovato"));
-		if (itemDtos == null || itemDtos.isEmpty())
-		{
-			throw new IllegalArgumentException("Ordine non contenente item");
-		}
-		ordine.getItem().clear();
-
-		List<OrdineItem> nuovoItem = new ArrayList<>();
-		double totale = 0.0;
-
-		for (OrdineItemDto dto : itemDtos)
-		{
-			if (dto.quantita() == null || dto.quantita() <= 0)
-			{
-				throw new IllegalArgumentException("Quantità minima: 1");
-			}
-
-			Prodotto prodotto = prodottoDao.findById(dto.prodottoId())
-					.orElseThrow(() -> new EntityNotFoundException("Prodotto con id " + dto.prodottoId() + "non trovato"));
-
-			OrdineItem item = new OrdineItem();
-			item.setOrdine(ordine);
-			item.setProdotto(prodotto);
-			item.setQuantita(dto.quantita());
-			item.setPrezzoTotale(prodotto.getPrezzo() * dto.quantita());
-
-			totale += item.getPrezzoTotale();
-			nuovoItem.add(item);
-		}
-		if (totale <= 0)
-		{
-			throw new IllegalArgumentException("Il totale minimo: >= 0");
-		}
-		ordine.setItem(nuovoItem);
-		ordine.setTotale(totale);
-		return ordineDao.save(ordine);
+		throw new UnsupportedOperationException("Aggiornamento ordine non supportato quando è attivo il controllo delle giacenze. Annulla e ricrea l'ordine.");
 	}
 
 	//Cancellazione
