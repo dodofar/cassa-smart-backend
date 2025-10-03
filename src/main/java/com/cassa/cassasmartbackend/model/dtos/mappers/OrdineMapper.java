@@ -9,8 +9,10 @@ import java.util.stream.Collectors;
 
 public class OrdineMapper
 {
+	// converto da entity Ordine -> OrdineDto
 	public static OrdineDto toDTO(Ordine ordine)
 	{
+		// trasformo ogni OrdineItem in OrdineItemDto
 		List<OrdineItemDto> items = ordine.getItem().stream()
 				.map(r -> new OrdineItemDto(
 						r.getId(),
@@ -20,6 +22,8 @@ public class OrdineMapper
 						r.getPrezzoTotale()
 				))
 				.collect(Collectors.toList());
+
+		// creo il dto finale con lista di item dentro
 		return new OrdineDto(
 				ordine.getId(),
 				ordine.getDataCreazione(),

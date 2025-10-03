@@ -6,6 +6,7 @@ import com.cassa.cassasmartbackend.model.entities.Prodotto;
 public class ProdottoMapper
 {
 
+	// converto da entity -> dto
 	public static ProdottoDto toDTO(Prodotto prodotto)
 	{
 		return new ProdottoDto(
@@ -16,6 +17,7 @@ public class ProdottoMapper
 		);
 	}
 
+	// converto da dto -> entity
 	public static Prodotto toEntity(ProdottoDto dto)
 	{
 		Prodotto p = new Prodotto();

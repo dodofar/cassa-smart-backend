@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface OrdineDao extends JpaRepository<Ordine, Long>
 {
+	// query per prendere ordini tra due date
 	@Query("SELECT o FROM Ordine o WHERE o.dataCreazione BETWEEN :start AND :end")
 	List<Ordine> findByDataCreazioneBetween(LocalDateTime start, LocalDateTime end);
 }
