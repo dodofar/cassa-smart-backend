@@ -18,21 +18,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Service
-@RequiredArgsConstructor
+@Service // servizio che gestisce la logica degli ordini
+@RequiredArgsConstructor // genera costruttore con i final
 public class OrdineService
 {
-	private final OrdineDao ordineDao;
-	private final ProdottoDao prodottoDao;
+	private final OrdineDao ordineDao; // dao per gli ordini
+	private final ProdottoDao prodottoDao; // dao per i prodotti
 
 	//Lista ordini
 	public List<Ordine> listaOrdini()
 	{
-		return ordineDao.findAll();
+		return ordineDao.findAll(); // prendo tutti gli ordini
 	}
 
 	//Crea ordine
-	@Transactional
+	@Transactional // così salva tutto o niente
 	public Ordine creaOrdine(List<OrdineItemDto> itemDtos)
 	{
 		if (itemDtos == null || itemDtos.isEmpty())
@@ -40,7 +40,7 @@ public class OrdineService
 			throw new IllegalArgumentException("L'ordine deve contenere almeno una riga");
 		}
 		Ordine ordine = new Ordine();
-		ordine.setDataCreazione(LocalDateTime.now());
+		ordine.setDataCreazione(LocalDateTime.now()); // data e ora ordine
 
 		List<OrdineItem> items = new ArrayList<>();
 		double totale = 0.0;
@@ -55,7 +55,7 @@ public class OrdineService
 			Prodotto prodotto = prodottoDao.findById(dto.prodottoId())
 					.orElseThrow(() -> new EntityNotFoundException("Prodotto con id " + dto.prodottoId() + " non trovato."));
 
-			// Controllo disponibilità
+			// controllo disponibilità prodotto
 			Integer disponibile = prodotto.getQuantita();
 			int richiesta = dto.quantita();
 			if (disponibile == null || disponibile < richiesta)
@@ -63,38 +63,40 @@ public class OrdineService
 				throw new IllegalArgumentException("Quantità insufficiente per il prodotto '" + prodotto.getNome() + "': disponibili " + (disponibile == null ? 0 : disponibile) + ", richiesti " + richiesta + ".");
 			}
 
-			// Scala la quantità in magazzino
+			// aggiorno magazzino
 			prodotto.setQuantita(disponibile - richiesta);
 			prodottoDao.save(prodotto);
 
-			// Validazione prezzo prodotto
+			// controllo prezzo
 			Double prezzoUnitario = prodotto.getPrezzo();
 			if (prezzoUnitario == null || prezzoUnitario <= 0)
 			{
 				throw new IllegalArgumentException("Prezzo non valido per il prodotto '" + prodotto.getNome() + "'. Impostare un prezzo > 0.");
 			}
 
+			// creo item dell'ordine
 			OrdineItem item = new OrdineItem();
 			item.setOrdine(ordine);
 			item.setProdotto(prodotto);
 			item.setQuantita(dto.quantita());
 			item.setPrezzoTotale(prezzoUnitario * dto.quantita());
 
-			totale += item.getPrezzoTotale();
+			totale += item.getPrezzoTotale(); // sommo al totale
 			items.add(item);
 		}
 		if (totale <= 0)
 		{
 			throw new IllegalArgumentException("Il totale dell’ordine deve essere positivo.");
 		}
-		ordine.setItem(items);
-		ordine.setTotale(totale);
-		return ordineDao.save(ordine);
+		ordine.setItem(items); // associo gli item
+		ordine.setTotale(totale); // imposto totale
+		return ordineDao.save(ordine); // salvo ordine
 	}
 
 	//Aggiorna ordine
 	public Ordine aggiornaOrdine(Long id, List<OrdineItemDto> itemDtos)
 	{
+		// non si può aggiornare perché c'è controllo giacenze
 		throw new UnsupportedOperationException("Aggiornamento ordine non supportato quando è attivo il controllo delle giacenze. Annulla e ricrea l'ordine.");
 	}
 
@@ -105,15 +107,15 @@ public class OrdineService
 		{
 			throw new EntityNotFoundException("Ordine con id" + id + " non trovato");
 		}
-		ordineDao.deleteById(id);
+		ordineDao.deleteById(id); // elimino ordine
 	}
 
 	//Calcolo statistiche
 	private Map<String, Object> calcolaStatistiche(List<Ordine> ordini)
 	{
-		double totale = ordini.stream().mapToDouble(Ordine::getTotale).sum();
-		long numeroOrdini = ordini.size();
-		double media = numeroOrdini > 0 ? totale / numeroOrdini : 0.0;
+		double totale = ordini.stream().mapToDouble(Ordine::getTotale).sum(); // somma dei totali
+		long numeroOrdini = ordini.size(); // numero ordini
+		double media = numeroOrdini > 0 ? totale / numeroOrdini : 0.0; // media ordini
 		Map<String, Object> stats = new HashMap<>();
 		stats.put("totaleIncassato", totale);
 		stats.put("numeroOrdini", numeroOrdini);
@@ -121,7 +123,7 @@ public class OrdineService
 		return stats;
 	}
 
-	//Calclo statistiche giornaliere
+	//Calcolo statistiche giornaliere
 	public Map<String, Object> statisticheGiornaliere(LocalDate giorno)
 	{
 		if (giorno == null)
@@ -130,7 +132,7 @@ public class OrdineService
 		}
 		List<Ordine> ordini = ordineDao.findAll();
 		List<Ordine> filtrati = ordini.stream()
-				.filter(o -> o.getDataCreazione().toLocalDate().equals(giorno))
+				.filter(o -> o.getDataCreazione().toLocalDate().equals(giorno)) // filtro per data
 				.toList();
 		return calcolaStatistiche(filtrati);
 	}
@@ -145,7 +147,7 @@ public class OrdineService
 		List<Ordine> ordini = ordineDao.findAll();
 		List<Ordine> filtrati = ordini.stream()
 				.filter(o -> o.getDataCreazione().getYear() == anno
-						&& o.getDataCreazione().getMonthValue() == mese)
+						&& o.getDataCreazione().getMonthValue() == mese) // filtro anno+mese
 				.toList();
 		return calcolaStatistiche(filtrati);
 	}
@@ -155,7 +157,7 @@ public class OrdineService
 	{
 		List<Ordine> ordini = ordineDao.findAll();
 		List<Ordine> filtrati = ordini.stream()
-				.filter(o -> o.getDataCreazione().getYear() == anno)
+				.filter(o -> o.getDataCreazione().getYear() == anno) // filtro anno
 				.toList();
 		return calcolaStatistiche(filtrati);
 	}
